@@ -6,7 +6,7 @@ import supersuit as ss
 
 from pettingzoo.butterfly import pistonball_v6
 
-# from PIL import Image 
+from PIL import Image 
 
 wall_h = 40
 wall_w = 40
@@ -125,11 +125,8 @@ def main():
         max_cycles=125,
     )
     parallel_env = ss.color_reduction_v0(parallel_env, mode="B")
-    parallel_env.reset(), parallel_env.agents
     parallel_env = ss.resize_v1(parallel_env, x_size=84, y_size=84)
-    parallel_env.reset(), parallel_env.agents
     parallel_env = ss.frame_stack_v1(parallel_env, 3)
-    parallel_env.reset(), parallel_env.agents
     # parallel_env = ss.pettingzoo_env_to_vec_env_v1(parallel_env)
     # parallel_env.reset(), parallel_env.agents
     # parallel_env = ss.concat_vec_envs_v1(parallel_env, 8, num_cpus=4, base_class="stable_baselines3")

@@ -19,7 +19,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args":["--scenario-name=simple_tag --evaluate-episodes=10"]
+            "args":["--evaluate-episodes=100"]
         }
     ]
 }

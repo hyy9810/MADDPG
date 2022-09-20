@@ -11,6 +11,7 @@ class Agent:
         self.policy = MADDPG(args, agent_id)
 
     def select_action(self, o, noise_rate, epsilon):
+        # o = o.transpose(2,0,1) # HWC->CHW
         if np.random.uniform() < epsilon:
             u = np.random.uniform(self.args.low_action, self.args.high_action, self.args.action_shape[self.agent_id]).astype('float32')
         else:
