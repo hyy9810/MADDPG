@@ -31,24 +31,29 @@ def store_args(method):
 
 
 def make_env(args):
-    from multiagent.environment import MultiAgentEnv
-    import multiagent.scenarios as scenarios
+    # from multiagent.environment import MultiAgentEnv
+    # import multiagent.scenarios as scenarios
 
-    # load scenario from script
-    scenario = scenarios.load(args.scenario_name + ".py").Scenario()
+    # # load scenario from script
+    # scenario = scenarios.load(args.scenario_name + ".py").Scenario()
 
-    # create world
-    world = scenario.make_world()
-    # create multiagent environment
-    env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation)
+    # # create world
+    # world = scenario.make_world()
+    # # create multiagent environment
+    # env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation)
+    from pettingzoo.mpe import simple_tag_v2
+    env = simple_tag_v2.parallel_env(max_cycles=125, continuous_actions=True)
     # env = MultiAgentEnv(world)
-    args.n_players = env.n  # 包含敌人的所有玩家个数
-    args.n_agents = env.n - args.num_adversaries  # 需要操控的玩家个数，虽然敌人也可以控制，但是双方都学习的话需要不同的算法
-    args.obs_shape = [env.observation_space[i].shape[0] for i in range(args.n_agents)]  # 每一维代表该agent的obs维度
+    args.n_players = env.max_num_agents  # 包含敌人的所有玩家个数
+    args.n_agents = env.max_num_agents - args.num_adversaries  # 需要操控的玩家个数，虽然敌人也可以控制，但是双方都学习的话需要不同的算法
+    env.reset()
+
+    args.obs_shape = [list(env.observation_spaces.values())[i].shape[0] for i in range(args.n_agents)]  # 每一维代表该agent的obs维度
     action_shape = []
-    for content in env.action_space:
-        action_shape.append(content.n)
+    for content in env.action_spaces.values():
+        # action_shape.append(content.n)
+        action_shape.append(content.shape[0])
     args.action_shape = action_shape[:args.n_agents]  # 每一维代表该agent的act维度
     args.high_action = 1
-    args.low_action = -1
+    args.low_action = 0
     return env, args
