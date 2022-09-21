@@ -23,7 +23,22 @@ class Agent:
             u += noise
             u = np.clip(u, self.args.low_action, self.args.high_action).astype("float32")
         return u.copy()
+    def select_actions(self, all_o, noise_rate, epsilon):
+        # o = o.transpose(2,0,1) # HWC->CHW
 
-    def learn(self, transitions, other_agents):
-        self.policy.train(transitions, other_agents)
+        inputs = torch.tensor(all_o, dtype=torch.float32)
+        pi = self.policy.actor_network(inputs)
+        # print('{} : {}'.format(self.name, pi))
+        all_u = pi.cpu().numpy().astype('float32')
+        noise = noise_rate * self.args.high_action * np.random.randn(*all_u.shape)  # gaussian noise
+        all_u += noise
+        all_u = np.clip(all_u, self.args.low_action, self.args.high_action).astype("float32")
+        for i in range(all_u.shape[0]):
+            if np.random.uniform() < epsilon:
+                all_u[i] = np.random.uniform(self.args.low_action, self.args.high_action, self.args.action_shape[self.agent_id]).astype('float32')
+                
+        return all_u.copy()
+
+    def learn(self, transitions):
+        self.policy.train(transitions)
 

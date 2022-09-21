@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
     parser.add_argument("--tau", type=float, default=0.01, help="parameter for updating the target network")
     parser.add_argument("--buffer-size", type=int, default=int(5e3), help="number of transitions can be stored in buffer")
-    parser.add_argument("--batch-size", type=int, default=256, help="number of episodes to optimize at the same time")
+    parser.add_argument("--batch-size", type=int, default=64, help="number of episodes to optimize at the same time")
     # Checkpointing
     parser.add_argument("--save-dir", type=str, default="./model", help="directory in which training state and model should be saved")
     parser.add_argument("--save-rate", type=int, default=2000, help="save model once every time this many episodes are completed")

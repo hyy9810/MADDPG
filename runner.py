@@ -22,30 +22,33 @@ class Runner:
 
     def _init_agents(self):
         agents = []
+        self.agent = agent = Agent(0, self.args)
         for i in range(self.args.n_agents):
-            agent = Agent(i, self.args)
             agents.append(agent)
         return agents
 
     def run(self):
         returns = []
+        done = False
         for time_step in tqdm(range(self.args.time_steps)):
             # reset the environment
-            if time_step % self.episode_limit == 0:
+            if time_step % self.episode_limit == 0 or done:
                 s = self.env.reset()
                 s = list(s.values())
             u = []
             actions = []
             agent_list = self.env.agents
             with torch.no_grad():
-                for agent_id, agent in enumerate(self.agents):
-                    action = agent.select_action(s[agent_id], self.noise, self.epsilon)
-                    u.append(action)
-                    actions.append(action)
-            for i in range(self.args.n_agents, self.args.n_players):
-                actions.append(np.array([np.random.rand(), np.random.rand(), np.random.rand(), np.random.rand(), 0],dtype='float32'))
-            actions = {agent_list[i]: actions[i]for i in range(len(actions))}
-            s_next, r, done, info = self.env.step(actions)
+                actions = self.agent.select_actions(s,self.noise,self.epsilon)
+                u = actions.copy()
+                # for agent_id, agent in enumerate(self.agents):
+                #     action = agent.select_action(s[agent_id], self.noise, self.epsilon)
+                #     u.append(action)
+                #     actions.append(action)
+            # for i in range(self.args.n_agents, self.args.n_players):
+            #     actions.append(np.array([np.random.rand(), np.random.rand(), np.random.rand(), np.random.rand(), 0],dtype='float32'))
+            actions_dict = {agent_list[i]: actions[i]for i in range(len(actions))}
+            s_next, r, done, info = self.env.step(actions_dict)
             
             r = list(r.values())
             s_next = list(s_next.values())
@@ -53,10 +56,11 @@ class Runner:
             s = s_next
             if self.buffer.current_size >= self.args.batch_size:
                 transitions = self.buffer.sample(self.args.batch_size)
-                for agent in self.agents:
-                    other_agents = self.agents.copy()
-                    other_agents.remove(agent)
-                    agent.learn(transitions, other_agents)
+                self.agent.learn(transitions)
+                # for agent in self.agents:
+                #     other_agents = self.agents.copy()
+                #     other_agents.remove(agent)
+                #     agent.learn(transitions, other_agents)
             if time_step > 0 and time_step % self.args.evaluate_rate == 0:
                 returns.append(self.evaluate())
                 plt.figure()
@@ -82,8 +86,6 @@ class Runner:
                     for agent_id, agent in enumerate(self.agents):
                         action = agent.select_action(s[agent_id], 0, 0)
                         actions.append(action)
-                for i in range(self.args.n_agents, self.args.n_players):
-                    actions.append([np.random.rand(), np.random.rand() , np.random.rand(), np.random.rand() , 0])
                 actions =  {self.env.agents[i]: actions[i]for i in range(len(actions))}
                 s_next, r, done, info = self.env.step(actions)
                 s_next = list(s_next.values())
