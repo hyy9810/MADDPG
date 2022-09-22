@@ -19,7 +19,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args":["--evaluate-episodes=100"]
+            "args":["--evaluate-episodes=5","--device=cuda:3"]
         }
     ]
 }

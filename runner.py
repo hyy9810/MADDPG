@@ -17,6 +17,7 @@ class Runner:
         self.agents = self._init_agents()
         self.buffer = Buffer(args)
         self.save_path = self.args.save_dir + '/' + self.args.scenario_name
+        self.best_return = None
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
 
@@ -29,12 +30,13 @@ class Runner:
 
     def run(self):
         returns = []
-        done = False
+        done = {f'piston_{i}':True for i in range(self.args.n_agents)}
         for time_step in tqdm(range(self.args.time_steps)):
             # reset the environment
-            if time_step % self.episode_limit == 0 or done:
+            if any(done.values()):
                 s = self.env.reset()
                 s = list(s.values())
+                done=False
             u = []
             actions = []
             agent_list = self.env.agents
@@ -54,7 +56,7 @@ class Runner:
             s_next = list(s_next.values())
             self.buffer.store_episode(s[:self.args.n_agents], u, r[:self.args.n_agents], s_next[:self.args.n_agents])
             s = s_next
-            if self.buffer.current_size >= self.args.batch_size:
+            if self.buffer.current_size >= self.args.batch_size and any(done.values()):
                 transitions = self.buffer.sample(self.args.batch_size)
                 self.agent.learn(transitions)
                 # for agent in self.agents:
@@ -63,6 +65,10 @@ class Runner:
                 #     agent.learn(transitions, other_agents)
             if time_step > 0 and time_step % self.args.evaluate_rate == 0:
                 returns.append(self.evaluate())
+                # 保存表现最好的
+                if self.best_return == None or returns[-1] > self.best_return:
+                    self.best_return = returns[-1]
+                    self.agent.policy.save_model_in(f'best_in_{len(returns)}')
                 plt.figure()
                 plt.plot(range(len(returns)), returns)
                 plt.xlabel('episode * ' + str(self.args.evaluate_rate / self.episode_limit))
@@ -79,19 +85,20 @@ class Runner:
             s = self.env.reset()
             s = list(s.values())
             rewards = 0
+            done = {f'piston_{i}':True for i in range(self.args.n_agents)}
             for time_step in range(self.args.evaluate_episode_len):
-                self.env.render()
+                # self.env.render()
                 actions = []
                 with torch.no_grad():
-                    for agent_id, agent in enumerate(self.agents):
-                        action = agent.select_action(s[agent_id], 0, 0)
-                        actions.append(action)
+                    actions = self.agent.select_actions(s,self.noise,self.epsilon)
                 actions =  {self.env.agents[i]: actions[i]for i in range(len(actions))}
                 s_next, r, done, info = self.env.step(actions)
                 s_next = list(s_next.values())
                 r = list(r.values())
                 rewards += r[0]
                 s = s_next
+                if any(done.values()):
+                    break
             returns.append(rewards)
             print('Returns is', rewards)
         s = self.env.reset()

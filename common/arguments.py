@@ -11,21 +11,22 @@ def get_args():
     # Environment
     parser.add_argument("--scenario-name", type=str, default="pistonball", help="name of the scenario script")
     parser.add_argument("--max-episode-len", type=int, default=100, help="maximum episode length")
-    parser.add_argument("--time-steps", type=int, default=int(2e4), help="number of time steps")
+    parser.add_argument("--time-steps", type=int, default=int(4e5), help="number of time steps")
+    parser.add_argument("--device", type=str, default='cpu', help="used device")
     # 一个地图最多env.n个agents，用户可以定义min(env.n,num-adversaries)个敌人，剩下的是好的agent
     parser.add_argument("--num-adversaries", type=int, default=0, help="number of adversaries")
     # Core training parameters
-    parser.add_argument("--lr-actor", type=float, default=1e-4, help="learning rate of actor")
-    parser.add_argument("--lr-critic", type=float, default=1e-3, help="learning rate of critic")
+    parser.add_argument("--lr-actor", type=float, default=1e-5, help="learning rate of actor")
+    parser.add_argument("--lr-critic", type=float, default=1e-4, help="learning rate of critic")
     parser.add_argument("--epsilon", type=float, default=0.1, help="epsilon greedy")
     parser.add_argument("--noise_rate", type=float, default=0.1, help="noise rate for sampling from a standard normal distribution ")
     parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
     parser.add_argument("--tau", type=float, default=0.01, help="parameter for updating the target network")
     parser.add_argument("--buffer-size", type=int, default=int(5e3), help="number of transitions can be stored in buffer")
-    parser.add_argument("--batch-size", type=int, default=64, help="number of episodes to optimize at the same time")
+    parser.add_argument("--batch-size", type=int, default=128, help="number of episodes to optimize at the same time")
     # Checkpointing
     parser.add_argument("--save-dir", type=str, default="./model", help="directory in which training state and model should be saved")
-    parser.add_argument("--save-rate", type=int, default=2000, help="save model once every time this many episodes are completed")
+    parser.add_argument("--save-rate", type=int, default=100, help="save model once every time this many episodes are completed")
     parser.add_argument("--model-dir", type=str, default="", help="directory in which training state and model are loaded")
 
     # Evaluate

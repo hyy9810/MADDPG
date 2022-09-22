@@ -26,7 +26,7 @@ class Agent:
     def select_actions(self, all_o, noise_rate, epsilon):
         # o = o.transpose(2,0,1) # HWC->CHW
 
-        inputs = torch.tensor(all_o, dtype=torch.float32)
+        inputs = torch.tensor(all_o, dtype=torch.float32).to(self.args.device)
         pi = self.policy.actor_network(inputs)
         # print('{} : {}'.format(self.name, pi))
         all_u = pi.cpu().numpy().astype('float32')

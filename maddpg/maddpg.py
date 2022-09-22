@@ -11,12 +11,13 @@ class MADDPG:
         self.train_step = 0
 
         # create the network
-        self.actor_network = Actor(args, agent_id)
-        self.critic_network = Critic(args)
+        self.actor_network = Actor(args, agent_id).to(args.device)
+        self.critic_network = Critic(args).to(args.device)
 
         # build up the target network
-        self.actor_target_network = Actor(args, agent_id)
-        self.critic_target_network = Critic(args)
+        self.actor_target_network = Actor(args, agent_id).to(args.device)
+        self.critic_target_network = Critic(args).to(args.device)
+
 
         # load the weights into the target networks
         self.actor_target_network.load_state_dict(self.actor_network.state_dict())
@@ -55,7 +56,7 @@ class MADDPG:
     # update the network
     def train(self, transitions):
         for key in transitions.keys():
-            transitions[key] = torch.tensor(transitions[key], dtype=torch.float32)
+            transitions[key] = torch.tensor(transitions[key], dtype=torch.float32).to(self.args.device)
         o, u, o_next = [], [], []  # 用来装每个agent经验中的各项
         for agent_id in range(self.args.n_agents):
             o.append(transitions['o_%d' % agent_id])
@@ -85,8 +86,10 @@ class MADDPG:
 
         # the actor loss
         # 重新选择联合动作中当前agent的动作，其他agent的动作不变
-        for agent_id in range(self.args.n_agents):
-            u[agent_id] = self.actor_network(o[agent_id])
+        # for self.agent_id in range(self.args.n_agents):
+        u[self.agent_id] = self.actor_network(o[self.agent_id])
+        self.agent_id += 1
+        self.agent_id %= 20
         actor_loss = - self.critic_network(o, u).mean()
         # if self.agent_id == 0:
         #     print('critic_loss is {}, actor_loss is {}'.format(critic_loss, actor_loss))
@@ -113,5 +116,15 @@ class MADDPG:
             os.makedirs(model_path)
         torch.save(self.actor_network.state_dict(), model_path + '/' + num + '_actor_params.pkl')
         torch.save(self.critic_network.state_dict(),  model_path + '/' + num + '_critic_params.pkl')
+    
+    def save_model_in(self, name):
+        model_path = os.path.join(self.args.save_dir, self.args.scenario_name)
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        model_path = os.path.join(model_path, 'agent')
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        torch.save(self.actor_network.state_dict(), model_path + '/' + f'{name}_actor_params.pkl')
+        torch.save(self.critic_network.state_dict(),  model_path + '/' + f'{name}_critic_params.pkl')
 
 
