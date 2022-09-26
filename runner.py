@@ -1,10 +1,11 @@
 from tqdm import tqdm
-from agent import Agent
+from agent import Agent, SAgent
 from common.replay_buffer import Buffer
 import torch
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from common.utils import writer
 
 
 class Runner:
@@ -23,9 +24,10 @@ class Runner:
 
     def _init_agents(self):
         agents = []
-        self.agent = agent = Agent(0, self.args)
-        for i in range(self.args.n_agents):
-            agents.append(agent)
+        # self.agent = agent = Agent(0, self.args)
+        self.agent = SAgent(0, self.args)
+        # for i in range(self.args.n_agents):
+        #     agents.append(agent)
         return agents
 
     def run(self):
@@ -71,6 +73,7 @@ class Runner:
                     self.agent.policy.save_model_in(f'best_in_{len(returns)}')
                 plt.figure()
                 plt.plot(range(len(returns)), returns)
+                writer.add_scalar("eval/rewards", returns[-1], len(returns))
                 plt.xlabel('episode * ' + str(self.args.evaluate_rate / self.episode_limit))
                 plt.ylabel('average returns')
                 plt.savefig(self.save_path + '/plt.png', format='png')

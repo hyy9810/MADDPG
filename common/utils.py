@@ -2,7 +2,14 @@ import numpy as np
 import inspect
 import functools
 import supersuit as ss
+from tensorboardX import SummaryWriter
+from datetime import datetime as dt
+from pathlib import Path
+now_time = dt.now().strftime("%Y%m%d-%H%M%S")
 
+log_dir = Path("./logs/", now_time)
+# log_dir.mkdir(parents=True,exist_ok=True)
+writer = SummaryWriter(log_dir)
 
 def store_args(method):
     """Stores provided method args as instance attributes.
@@ -51,7 +58,7 @@ def make_env(args):
     env = ss.frame_stack_v1(env,3,0)
     # env = MultiAgentEnv(world)
     args.n_players = env.max_num_agents  # 包含敌人的所有玩家个数
-    args.n_agents = env.max_num_agents - args.num_adversaries  # 需要操控的玩家个数，虽然敌人也可以控制，但是双方都学习的话需要不同的算法
+    args.n_agents = env.max_num_agents #- args.num_adversaries  # 需要操控的玩家个数，虽然敌人也可以控制，但是双方都学习的话需要不同的算法
     env.reset()
 
     args.obs_shape = [i.shape for i in env.observation_spaces.values()]  # 每一维代表该agent的obs维度

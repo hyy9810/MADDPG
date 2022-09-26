@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import os
-from maddpg.maddpg import MADDPG
+from maddpg.maddpg import MADDPG, DDPG
 
 
 class Agent:
@@ -42,3 +42,34 @@ class Agent:
     def learn(self, transitions):
         self.policy.train(transitions)
 
+
+class SAgent:
+    def __init__(self, agent_id, args):
+        self.args = args
+        self.agent_id = agent_id
+        self.policy = DDPG(args, agent_id)
+
+    def select_action(self, o, noise_rate, epsilon):
+        # o = o.transpose(2,0,1) # HWC->CHW
+        if np.random.uniform() < epsilon:
+            u = np.random.uniform(self.args.low_action, self.args.high_action,
+                                  [sum(self.args.action_shape),1]).astype('float32')
+        else:
+            inputs = torch.tensor(o, dtype=torch.float32).unsqueeze(0)
+            pi = self.policy.actor_network(inputs).squeeze(0)
+            # print('{} : {}'.format(self.name, pi))
+            pi = pi.unsqueeze(-1)
+            u = pi.cpu().numpy().astype('float32')
+            noise = noise_rate * self.args.high_action * \
+                np.random.randn(*u.shape)  # gaussian noise
+            u += noise
+            u = np.clip(u, self.args.low_action,
+                        self.args.high_action).astype("float32")
+        return u.copy()
+
+    def select_actions(self, all_o, noise_rate, epsilon):
+        o = torch.tensor(all_o, dtype=torch.float32).to(self.args.device)
+        return self.select_action(o.view((60,84,84)), noise_rate, epsilon)
+
+    def learn(self, transitions):
+        self.policy.train(transitions)
